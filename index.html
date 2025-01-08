@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamtape File Transfer</title>
+    <script>
+        // Function to list contents of a destination folder
+        async function listDestContents(destLogin, destApiKey, folderId) {
+            const url = `https://api.streamtape.com/file/listfolder?login=${destLogin}&key=${destApiKey}&folder=${folderId}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 200) {
+                    const files = data.result.files || [];
+                    const folders = data.result.folders || [];
+                    return { files, folders };
+                }
+            }
+            return { files: [], folders: [] };
+        }
+
+        // Function to create a folder in the destination account
+        async function createFolder(destLogin, destApiKey, folderName, parentFolderId) {
+            const url = `https://api.streamtape.com/file/createfolder?login=${destLogin}&key=${destApiKey}&name=${folderName}&pid=${parentFolderId}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 200) {
+                    return data.result.folderid;
+                } else {
+                    console.error(`Error creating folder '${folderName}': ${data.msg}`);
+                }
+            }
+            console.error(`Failed to create folder '${folderName}'.`);
+            return null;
+        }
+
+        // Function to add remote upload in the destination account
+        async function addRemoteUpload(destLogin, destApiKey, fileUrl, destFolderId) {
+            const url = `https://api.streamtape.com/remotedl/add?login=${destLogin}&key=${destApiKey}&url=${fileUrl}&folder=${destFolderId}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 200) {
+                    return true;
+                } else {
+                    console.error(`Error adding remote upload for file: ${data.msg}`);
+                }
+            }
+            console.error("Failed to add remote upload.");
+            return false;
+        }
+
+        // Recursive function to copy files and folders from source to destination
+        async function copyFilesAndFolders(srcLogin, srcApiKey, destLogin, destApiKey, srcFolderId, destFolderId) {
+            const url = `https://api.streamtape.com/file/listfolder?login=${srcLogin}&key=${srcApiKey}&folder=${srcFolderId}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 200) {
+                    const folders = data.result.folders || [];
+                    const files = data.result.files || [];
+
+                    // List files and folders in the destination folder
+                    const { files: existingFiles, folders: existingFolders } = await listDestContents(destLogin, destApiKey, destFolderId);
+
+                    // Copy files
+                    for (const file of files) {
+                        const fileName = file.name;
+                        const fileUrl = file.link;
+                        if (existingFiles.some(f => f.name === fileName)) {
+                            console.log(`File '${fileName}' already exists in destination. Skipping.`);
+                        } else {
+                            console.log(`Copying file: ${fileName}`);
+                            await addRemoteUpload(destLogin, destApiKey, fileUrl, destFolderId);
+                        }
+                    }
+
+                    // Copy subfolders
+                    for (const folder of folders) {
+                        const folderName = folder.name;
+                        let destSubfolderId = existingFolders.find(f => f.name === folderName)?.id;
+                        if (!destSubfolderId) {
+                            console.log(`Creating folder: ${folderName}`);
+                            destSubfolderId = await createFolder(destLogin, destApiKey, folderName, destFolderId);
+                        }
+                        if (destSubfolderId) {
+                            // Recursively copy the contents of the subfolder
+                            await copyFilesAndFolders(srcLogin, srcApiKey, destLogin, destApiKey, folder.id, destSubfolderId);
+                        }
+                    }
+                } else {
+                    console.error(`Error listing folder: ${data.msg}`);
+                }
+            } else {
+                console.error(`Failed to retrieve data. HTTP Status code: ${response.status}`);
+            }
+        }
+
+        // Function to start the copy process (replace with your credentials)
+        function startCopyProcess() {
+            const sourceLogin = document.getElementById("sourceLogin").value;
+            const sourceApiKey = document.getElementById("sourceApiKey").value;
+            const sourceFolderId = document.getElementById("sourceFolderId").value;
+            const destLogin = document.getElementById("destLogin").value;
+            const destApiKey = document.getElementById("destApiKey").value;
+            const destRootFolderId = document.getElementById("destRootFolderId").value;
+
+            copyFilesAndFolders(sourceLogin, sourceApiKey, destLogin, destApiKey, sourceFolderId, destRootFolderId);
+        }
+    </script>
+</head>
+<body>
+    <h1>Streamtape File Transfer</h1>
+    
+    <div>
+        <h2>Source Account</h2>
+        <label for="sourceLogin">Login:</label><input type="text" id="sourceLogin" required><br>
+        <label for="sourceApiKey">API Key:</label><input type="text" id="sourceApiKey" required><br>
+        <label for="sourceFolderId">Source Folder ID:</label><input type="text" id="sourceFolderId" required><br>
+    </div>
+
+    <div>
+        <h2>Destination Account</h2>
+        <label for="destLogin">Login:</label><input type="text" id="destLogin" required><br>
+        <label for="destApiKey">API Key:</label><input type="text" id="destApiKey" required><br>
+        <label for="destRootFolderId">Destination Root Folder ID:</label><input type="text" id="destRootFolderId" required><br>
+    </div>
+
+    <button onclick="startCopyProcess()">Start Copy Process</button>
+</body>
+</html>
