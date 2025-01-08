@@ -10,3 +10,8 @@ Maintains the original folder hierarchy during the transfer.
 Skips files that already exist in the destination account.
 ## Offline Operation:
 Runs entirely in your local browser—no data is sent to any external servers.
+
+# How to Use
+## Open the page
+Visit the following link to access the webpage in your browser:  
+<a href=https://render-i.github.io/Streamtape-copy/>Streamtape-copy</a>
