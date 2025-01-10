@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamtape File Transfer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Streamtape File Transfer</h1>
+    
+    <div class="account-container source-account">
+        <h2>Source Account</h2>
+        <div class="input-group">
+            <label for="sourceLogin">Login:</label>
+            <input type="text" id="sourceLogin" required>
+        </div>
+        <div class="input-group">
+            <label for="sourceApiKey">API Key:</label>
+            <input type="text" id="sourceApiKey" required>
+        </div>
+        <div class="input-group">
+            <label for="sourceFolderId">Source Folder ID:</label>
+            <input type="text" id="sourceFolderId" required>
+        </div>
+    </div>
+
+    <div class="account-container destination-account">
+        <h2>Destination Account</h2>
+        <div class="input-group">
+            <label for="destLogin">Login:</label>
+            <input type="text" id="destLogin" required>
+        </div>
+        <div class="input-group">
+            <label for="destApiKey">API Key:</label>
+            <input type="text" id="destApiKey" required>
+        </div>
+        <div class="input-group">
+            <label for="destRootFolderId">Destination Root Folder ID:</label>
+            <input type="text" id="destRootFolderId" required>
+        </div>
+    </div>
+
+    <button class="copy-process-button" onclick="startCopyProcess()">
+        Start Copy Process
+    </button>
+
+    <div class="output-container">
+        <h2 class="output-header">Process Output</h2>
+        <div id="output">
+            <!-- Output messages will appear here -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
